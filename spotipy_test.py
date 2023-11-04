@@ -12,7 +12,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyOAuth
 
 # Determine how many saved songs to print out
 if len(sys.argv) > 1:
@@ -32,7 +32,8 @@ begin_time = datetime.now()
 load_dotenv()
 
 # Use environment variables to get API authorization
-spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
+scope = "user-library-read"
+spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
 # Retrieval is quicker if done in batches, 50 seems to be the max without getting blocked
 NUM_BATCH = 50
@@ -78,7 +79,7 @@ print() # \n
 # Calculate and display total execution time
 end_time = datetime.now()
 execution_length = end_time - begin_time
-print('This took ', execution_length, ' seconds')
+print('This took', execution_length, 'seconds')
 
 # Ask for an input so the window doesn't immediately close
 input('Press ENTER to exit.')
