@@ -13,12 +13,11 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth
+from spotipy.oauth2 import SpotifyClientCredentials
 
 # Determine how many saved songs to print out
 if len(sys.argv) > 1:
-    NUM_SONGS = ' '.join(sys.argv[1:])
-    NUM_SONGS = int(NUM_SONGS)
+    NUM_SONGS = int(sys.argv[1])
 else:
     while True:
         try:
@@ -34,8 +33,7 @@ begin_time = datetime.now()
 load_dotenv()
 
 # Use environment variables to get API authorization
-scope = "user-library-read"
-sp = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+spotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())
 
 # Retrieval is quicker if done in batches, 50 seems to be the max without getting blocked
 NUM_BATCH = 50
@@ -56,7 +54,7 @@ for x in range(MODULO+1):
             break
     
     try:
-        saved = sp.current_user_saved_tracks(NUM_TO_GRAB, x * NUM_BATCH)
+        saved = spotify.current_user_saved_tracks(NUM_TO_GRAB, x * NUM_BATCH)
     except:
         print() # \n
         print('Something went wrong retrieving your songs.')
@@ -71,10 +69,10 @@ for x in range(MODULO+1):
 
         # Create spaces after song titles to keep artist name aligned
         NAME_SPACES = ''
-        for z in range(80 - len(str(track['name']))):
+        for z in range(80 - len(track['name'])):
             NAME_SPACES += ' '
 
-        print(SONG_NUM, "| ", track['name'] + NAME_SPACES, " | ", track['artists'][0]['name'])
+        print(SONG_NUM, '| ', track['name'] + NAME_SPACES, ' | ', track['artists'][0]['name'])
 
 print() # \n
 
