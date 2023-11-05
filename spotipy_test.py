@@ -5,7 +5,6 @@
 # TODO: Add comparison of liked songs to playlists to find liked songs not in any playlists
 
 # Imports
-import sys
 from datetime import datetime
 
 from dotenv import load_dotenv
