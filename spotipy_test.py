@@ -11,6 +11,25 @@ from dotenv import load_dotenv
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
+# Error handler for when calls to Spotify API fail
+def handle_api_error(error):
+    match error:
+        case 'AUTHENTICATION_ERR':
+            print('Couldn\'t authenticate with Spotify.')
+        case 'USER_RETRIEVE_ERROR':
+            print('Couldn\'t get user profile.')
+        case 'PLAYLIST_RETRIEVE_ERROR':
+            print('Couldn\'t get playlists.')
+        case 'PLAYLIST_ITEM_RETRIEVE_ERROR':
+            print('Couldn\'t get playlist items.')
+        case 'SAVED_SONGS_ERROR':
+            print('Couldn\'t check saved songs.')
+        case _:
+            print('Unknown error')
+
+    input('Press ENTER to exit.')
+    exit()
+
 # Grab start time to calculate total execution time
 begin_time = datetime.now()
 
@@ -22,34 +41,19 @@ scope = 'user-library-read,user-read-private,playlist-read-private'
 try:
     spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 except:
-    print('Couldn\'t authenticate with Spotify.')
-    input('Press ENTER to exit.')
-    exit()
-else:
-    print('Authenticated with Spotify.')
-    print()
+    handle_api_error('AUTHENTICATION_ERR')
 
 # Save user since we only check playlists which are owned by the user
 try:
     user = spotify.current_user()
 except:
-    print('Couldn\'t get user profile.')
-    input('Press ENTER to exit.')
-    exit()
-else:
-    print('Successfully retrieved user.')
-    print()
+    handle_api_error('USER_RETRIEVE_ERROR')
 
 # Retrieve user's playlists
 try:
     playlists = spotify.current_user_playlists()
 except:
-    print('Couldn\'t get playlists.')
-    input('Press ENTER to exit.')
-    exit()
-else:
-    print('Successfully retrieved playlists.')
-    print()
+    handle_api_error('PLAYLIST_RETRIEVE_ERROR')
 
 while playlists:
     # Iterate through playlists
@@ -62,9 +66,7 @@ while playlists:
             try:
                 current_playlist_tracks = spotify.playlist_items(playlist_id=playlist['id'])
             except:
-                print('Couldn\'t get playlist items.')
-                input('Press ENTER to exit.')
-                exit()
+                handle_api_error('PLAYLIST_ITEM_RETRIEVE_ERROR')
             
             # Iterate through tracks in current playlist
             while current_playlist_tracks:
@@ -78,9 +80,7 @@ while playlists:
                 try:
                     saved = spotify.current_user_saved_tracks_contains(tracks=current_track_ids)
                 except:
-                    print('Couldn\'t check saved songs.')
-                    input('Press ENTER to exit.')
-                    exit()
+                    handle_api_error('SAVED_SONGS_ERROR')
                 
                 # Print non-saved tracks
                 for k in saved:
@@ -92,9 +92,7 @@ while playlists:
                     try:
                         current_playlist_tracks = spotify.next(current_playlist_tracks)
                     except:
-                        print('Couldn\'t get next set of playlist items.')
-                        input('Press ENTER to exit.')
-                        exit()
+                        handle_api_error('PLAYLIST_ITEM_RETRIEVE_ERROR')
                 else:
                     current_playlist_tracks = None
 
@@ -105,9 +103,7 @@ while playlists:
         try:
             playlists = spotify.next(playlists)
         except:
-            print('Couldn\'t get next set of playlists.')
-            input('Press ENTER to exit.')
-            exit()
+            handle_api_error('PLAYLIST_RETRIEVE_ERROR')
     else:
         playlists = None
 
