@@ -55,8 +55,8 @@ try:
 except:
     handle_api_error('PLAYLIST_RETRIEVE_ERROR')
 
+# Iterate through playlists
 while playlists:
-    # Iterate through playlists
     for i, playlist in enumerate(playlists['items']):
         # Only check playlists which are owned by the user
         if playlist['owner']['id'] == user['id']:
@@ -64,7 +64,7 @@ while playlists:
 
            # Retrieve tracks in current playlist
             try:
-                current_playlist_tracks = spotify.playlist_items(playlist_id=playlist['id'])
+                current_playlist_tracks = spotify.playlist_items(playlist_id=playlist['id'], limit=50)
             except:
                 handle_api_error('PLAYLIST_ITEM_RETRIEVE_ERROR')
             
@@ -74,6 +74,7 @@ while playlists:
                 current_tracks = []
                 current_track_ids = []
                 for j, item in enumerate(current_playlist_tracks['items']):
+                    current_tracks.append(item['track'])
                     current_track_ids.append(item['track']['id'])
                 
                 # Check if tracks are saved
@@ -85,7 +86,7 @@ while playlists:
                 # Print non-saved tracks
                 for k in saved:
                     if not saved[k]:
-                        print(' ', current_tracks['name'])
+                        print(' ', current_tracks[k]['name'], '—', current_tracks[k]['artists'][0]['name'])
                 
                 # If there are more tracks in playlist, get next page
                 if(current_playlist_tracks['next']):
