@@ -57,7 +57,7 @@ except:
 
 # Iterate through playlists
 while playlists:
-    for i, playlist in enumerate(playlists['items']):
+    for playlist in playlists['items']:
         # Only check playlists which are owned by the user
         if playlist['owner']['id'] == user['id']:
             print(playlist['name'])
@@ -73,7 +73,7 @@ while playlists:
                 # Put track IDs into a list to reduce API calls
                 current_tracks = []
                 current_track_ids = []
-                for j, item in enumerate(current_playlist_tracks['items']):
+                for item in current_playlist_tracks['items']:
                     current_tracks.append(item['track'])
                     current_track_ids.append(item['track']['id'])
                 
@@ -84,9 +84,9 @@ while playlists:
                     handle_api_error('SAVED_SONGS_ERROR')
                 
                 # Print non-saved tracks
-                for k in saved:
-                    if not saved[k]:
-                        print(' ', current_tracks[k]['name'], '—', current_tracks[k]['artists'][0]['name'])
+                for idx, value in enumerate(saved):
+                    if not value:
+                        print(' ', current_tracks[idx]['name'], '—', current_tracks[idx]['artists'][0]['name'])
                 
                 # If there are more tracks in playlist, get next page
                 if(current_playlist_tracks['next']):
@@ -96,6 +96,8 @@ while playlists:
                         handle_api_error('PLAYLIST_ITEM_RETRIEVE_ERROR')
                 else:
                     current_playlist_tracks = None
+                
+                print('.')
 
             print()
 
