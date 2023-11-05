@@ -67,8 +67,8 @@ while playlists:
             current_playlist_tracks = spotify.playlist_items(playlist_id=playlist['id'], limit=BATCH_SIZE)
             while current_playlist_tracks:
                 # Put every track ID into a list to reduce API calls
+                current_track_ids = []
                 for j, item in enumerate(current_playlist_tracks['items']):
-                    current_track_ids = []
                     current_track_ids.append(item['track']['id'])
                 saved = spotify.current_user_saved_tracks_contains(tracks=current_track_ids)
                 for k in saved:
