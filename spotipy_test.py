@@ -20,7 +20,7 @@ if len(sys.argv) > 1:
 else:
     while True:
         try:
-            NUM_SONGS = int(input('How many songs?  '))
+            NUM_SONGS = int(input('How many songs? '))
             break
         except:
             print('Please enter an integer')
@@ -32,7 +32,7 @@ begin_time = datetime.now()
 load_dotenv()
 
 # Use environment variables to get API authorization
-scope = "user-library-read"
+scope = 'user-library-read'
 spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 
 # Retrieval is quicker if done in batches, 50 seems to be the max without getting blocked
@@ -44,17 +44,19 @@ print('#     |  Title                                                           
 print('------+------------------------------------------------------------------------------------+---------------')
 
 # Retrieve and print songs
-for x in range(MODULO+1):
-    if NUM_SONGS - x * NUM_BATCH > NUM_BATCH:
+for x in range(MODULO + 1):
+    # If the number of songs requested is not divisible by 50, last retrieval will be whatever is left
+    if (NUM_SONGS - (x * NUM_BATCH)) > NUM_BATCH:
         NUM_TO_GRAB = NUM_BATCH
     else:
-        NUM_TO_GRAB = NUM_SONGS - x * NUM_BATCH
+        NUM_TO_GRAB = NUM_SONGS - (x * NUM_BATCH)
     
+    # If true, we are done retrieving songs
     if NUM_TO_GRAB == 0:
             break
     
     try:
-        saved = spotify.current_user_saved_tracks(NUM_TO_GRAB, x * NUM_BATCH)
+        saved = spotify.current_user_saved_tracks(NUM_TO_GRAB, (x * NUM_BATCH))
     except:
         print() # \n
         print('Something went wrong retrieving your songs.')
