@@ -23,32 +23,62 @@ load_dotenv()
 
 # Use environment variables to get API authorization
 scope = 'user-library-read,user-read-private,playlist-read-private'
-spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+try:
+    spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
+except:
+    print('Couldn\'t authenticate with Spotify.')
+    input('Press ENTER to exit.')
+    exit()
+else:
+    print('Authenticated with Spotify.')
+    print()
 
-# Save user id
-user = spotify.current_user()
+# Save user since we only check playlists which are owned by the user
+try:
+    user = spotify.current_user()
+except:
+    print('Couldn\'t get user profile.')
+    input('Press ENTER to exit.')
+    exit()
+else:
+    print('Successfully retrieved user.')
+    print()
 
 #Retrieve playlists
-playlists = spotify.current_user_playlists()
+try:
+    playlists = spotify.current_user_playlists()
+except:
+    print('Couldn\'t get playlists')
+    input('Press ENTER to exit.')
+    exit()
+else:
+    print('Successfully retrieved playlists.')
+    print()
+
+print('Analyzing playlists...')
+print()
+
 while playlists:
     for i, playlist in enumerate(playlists['items']):
         # Only check playlists which are owned by the user
         if playlist['owner']['id'] == user['id']:
             print(playlist['name'])
             # Go through all tracks in current playlist
-            current_playlist_tracks = spotify.playlist_items(playlist['id'])
+            current_playlist_tracks = spotify.playlist_items(playlist_id=playlist['id'], limit=BATCH_SIZE)
             while current_playlist_tracks:
+                # Put every track ID into a list to reduce API calls
                 for j, item in enumerate(current_playlist_tracks['items']):
-                    # If track is saved
-                    current_track_id = item['track']['id']
-                    saved = spotify.current_user_saved_tracks_contains(tracks=[current_track_id])
-                    if not saved[0]:
+                    current_track_ids = []
+                    current_track_ids.append(item['track']['id'])
+                saved = spotify.current_user_saved_tracks_contains(tracks=current_track_ids)
+                for k in saved:
+                    if not saved[k]:
                         print(' ', item['track']['name'])
                 if(current_playlist_tracks['next']):
                     current_playlist_tracks = spotify.next(current_playlist_tracks)
                 else:
                     current_playlist_tracks = None
-            print() # \n
+            print()
     if playlists['next']:
         playlists = spotify.next(playlists)
     else:
