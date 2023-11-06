@@ -1,7 +1,7 @@
-## File: spotipy_test.py
+## File: you_missed_a_spot.py
 ## Author: Grant Goode
 #
-## Description: Currently, spotipy_test.py finds and prints all songs in the user's playlists which are not in their Saved Songs.
+## Description: Currently finds and prints all songs in the user's playlists which are not in their Saved Songs.
 ## TODO: Add comparison of liked songs to playlists to find liked songs not in any playlists
 
 
