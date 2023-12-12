@@ -4,16 +4,17 @@
 ## Description: Currently finds and prints all songs in the user's playlists which are not in their Saved Songs.
 ## TODO: Add comparison of liked songs to playlists to find liked songs not in any playlists
 
-
-## Imports
+###########
+## Imports ##
+###########
 from dotenv import load_dotenv
 from time import sleep
-
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-
-## Functions
+##################
+## Helper Functions ##
+##################
 # Error handler for when calls to Spotify API fail
 def handle_api_error(error):
     match error:
@@ -87,7 +88,9 @@ def get_more_playlists(playlists):
     return playlists
 
 
-## Start of Program
+##################
+## Start of Program  ##
+##################
 # Grab environment variables for Spotify API
 load_dotenv()
 
@@ -98,7 +101,7 @@ try:
 except:
     handle_api_error('AUTHENTICATION_ERR')
 
-# Save user since we only check playlists which are owned by the user
+# Retrieve user
 try:
     user = spotify.current_user()
 except:
@@ -106,7 +109,7 @@ except:
 
 # Retrieve user's playlists
 try:
-    playlists = spotify.current_user_playlists()
+    playlists = spotify.current_user_playlists(limit=50)
 except:
     handle_api_error('PLAYLIST_RETRIEVE_ERROR')
 
