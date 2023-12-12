@@ -1,8 +1,9 @@
 ## File: you_missed_a_spot.py
 ## Author: Grant Goode
 #
-## Description: Currently finds and prints all songs in the user's playlists which are not in their Saved Songs.
-## TODO: Add comparison of liked songs to playlists to find liked songs not in any playlists
+## Currently implemented features:
+## 1. Finds all songs in the user's playlists which are not in their Liked Songs.
+## 2. Finds all songs in the user's Liked Songs which are not in any of their playlists.
 
 ###########
 ## Imports ##
@@ -87,6 +88,120 @@ def get_more_playlists(playlists):
 
     return playlists
 
+# If there are more saved songs, get next page
+def get_more_saved_songs(saved_songs):
+    if saved_songs['next']:
+        try:
+            saved_songs = spotify.next(saved_songs)
+        except:
+            handle_api_error('SAVED_SONGS_ERROR')
+    else:
+        saved_songs = None
+    
+    return saved_songs
+
+################
+## Main Functions ##
+################
+# Check playlists for any unsaved songs
+def check_playlists_for_unsaved(user, playlists):
+
+    # Iterate through playlists
+    while playlists:
+        for playlist in playlists['items']:
+            # Only check playlists which are owned by the user and not collaborative
+            if playlist['owner']['id'] == user['id'] and not playlist['collaborative']:
+                print(playlist['name'])
+
+                # Retrieve tracks in current playlist
+                current_playlist_tracks = retrieve_playlist_tracks(playlist)
+                
+                # Iterate through tracks in current playlist
+                while current_playlist_tracks:
+                    # Put track objects and IDs into lists to reduce API calls
+                    current_tracks, current_track_ids = create_batches(current_playlist_tracks)
+                    
+                    # Check if tracks are saved
+                    saved = check_if_tracks_saved(current_track_ids)
+
+                    # Slow down repeated API calls
+                    sleep(0.1)
+
+                    # Print non-saved tracks
+                    for idx, value in enumerate(saved):
+                        if not value:
+                            print(' ', current_tracks[idx]['name'], '—', current_tracks[idx]['artists'][0]['name'])
+                    
+                    # If there are more tracks in the current playlist, get next page
+                    current_playlist_tracks = get_more_tracks(current_playlist_tracks)
+                    
+                    print(' .')
+
+                print()
+
+        # If there are more playlists, get next page
+        playlists = get_more_playlists(playlists)
+
+# Check for any saved songs that are not in any playlists
+def check_saved_not_in_playlists(user, playlists):
+
+    # Retrieve saved songs and save track IDs to a list
+    print('Retrieving ALL saved songs...')
+    print('This may take a while.')
+    saved_songs = spotify.current_user_saved_tracks(limit=50)
+    saved_tracks = []
+    while(saved_songs):
+        for item in saved_songs['items']:
+            saved_tracks.append(item['track'])
+
+        # Slow down repeated API calls
+        sleep(0.05)
+        saved_songs = get_more_saved_songs(saved_songs)
+        print('.')
+     
+    # Iterate through playlists
+    print('Checking saved songs against playlists...')
+    while playlists:
+        for playlist in playlists['items']:
+            # Only check playlists which are owned by the user and not collaborative
+            if playlist['owner']['id'] == user['id'] and not playlist['collaborative']:
+                print(playlist['name'])
+
+                # Retrieve tracks in current playlist
+                current_playlist_tracks = retrieve_playlist_tracks(playlist)
+                
+                # Iterate through tracks in current playlist
+                while current_playlist_tracks:
+                    # Put track objects and IDs into lists to reduce API calls
+                    current_tracks, current_track_ids = create_batches(current_playlist_tracks)
+                    
+                    # Check if tracks are saved
+                    for current_track_id in current_track_ids:
+                        for saved_track in saved_tracks:
+                            if current_track_id == saved_track['id']:
+                                saved_tracks.remove(saved_track)
+
+                    # Slow down repeated API calls
+                    sleep(0.1)
+                    
+                    # If there are more tracks in the current playlist, get next page
+                    current_playlist_tracks = get_more_tracks(current_playlist_tracks)
+                    
+                    print(' .')
+
+                print()
+
+        # If there are more playlists, get next page
+        playlists = get_more_playlists(playlists)
+
+    # Put saved songs not found in any playlists into a text file
+    with open('results.txt', 'a', encoding='utf-8') as file:
+        for saved_track in saved_tracks:
+            formatted_name = str(saved_track['name'] + ' — ' + saved_track['artists'][0]['name'])
+            file.write(formatted_name)
+            file.write('\n')
+        file.close()
+    print('Results saved to results.txt')
 
 ##################
 ## Start of Program  ##
@@ -113,41 +228,23 @@ try:
 except:
     handle_api_error('PLAYLIST_RETRIEVE_ERROR')
 
-# Iterate through playlists
-while playlists:
-    for playlist in playlists['items']:
-        # Only check playlists which are owned by the user and not collaborative
-        if playlist['owner']['id'] == user['id'] and not playlist['collaborative']:
-            print(playlist['name'])
+# Pick which function to perform
+choice = 0
+while True:
+    print('--- Main Menu ---')
+    print('1. Find all unsaved songs in playlists')
+    print('2. Find all saved songs not in any playlists')
+    print('Or press ENTER to exit')
 
-            # Retrieve tracks in current playlist
-            current_playlist_tracks = retrieve_playlist_tracks(playlist)
-            
-            # Iterate through tracks in current playlist
-            while current_playlist_tracks:
-                # Put track objects and IDs into lists to reduce API calls
-                current_tracks, current_track_ids = create_batches(current_playlist_tracks)
-                
-                # Check if tracks are saved
-                saved = check_if_tracks_saved(current_track_ids)
-
-                # Slow down repeated API calls
-                sleep(0.1)
-
-                # Print non-saved tracks
-                for idx, value in enumerate(saved):
-                    if not value:
-                        print(' ', current_tracks[idx]['name'], '—', current_tracks[idx]['artists'][0]['name'])
-                
-                # If there are more tracks in the current playlist, get next page
-                current_playlist_tracks = get_more_tracks(current_playlist_tracks)
-                
-                print(' .')
-
-            print()
-
-    # If there are more playlists, get next page
-    playlists = get_more_playlists(playlists)
-
-# Ask for an input so the window doesn't immediately close
-input('Press ENTER to exit.')
+    choice = input()
+    match choice:
+        case '1':
+            print('\r\nChecking playlists for unsaved songs...')
+            check_playlists_for_unsaved(user, playlists)
+        case '2':
+            print('\r\nChecking for saved songs not in any playlists...')
+            check_saved_not_in_playlists(user, playlists)
+        case '':
+            exit()
+        case _:
+            print('\r\nPick a valid option or press ENTER to exit.')
