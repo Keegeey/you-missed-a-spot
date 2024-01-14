@@ -4,6 +4,8 @@
 ###########
 ## Imports ##
 ###########
+import random
+import time
 from dotenv import load_dotenv
 from time import sleep
 import spotipy
@@ -95,6 +97,17 @@ def get_more_saved_songs(saved_songs):
         saved_songs = None
     
     return saved_songs
+
+def get_more_saved_albums(saved_albums):
+    if saved_albums['next']:
+        try:
+            saved_albums = spotify.next(saved_albums)
+        except:
+            handle_api_error('SAVED_SONGS_ERROR')
+    else:
+        saved_albums = None
+    
+    return saved_albums
 
 ################
 ## Main Functions ##
@@ -199,9 +212,33 @@ def check_saved_not_in_playlists(user, playlists):
         file.close()
     print('Results saved to results.txt')
 
+# Select a random album from the user's saved albums
+def random_saved_album():
+    #   Seed random number generator
+    random.seed(time.time())
+
+    # Save albums to a list
+    saved_albums = spotify.current_user_saved_albums(limit=50)
+    saved_albums_list = []
+    while saved_albums:
+        for item in saved_albums['items']:
+            saved_albums_list.append(item['album'])
+
+        # Slow down repeated API calls
+        sleep(0.05)
+        saved_albums = get_more_saved_albums(saved_albums)
+        print('.')
+    
+    # Pick and print random album
+    random_album_idx = random.randint(0, len(saved_albums_list) - 1)
+    print('Your random album is: ')
+    print(saved_albums_list[random_album_idx]['name'], '—', saved_albums_list[random_album_idx]['artists'][0]['name'])
+    print()
+
 ##################
 ## Start of Program  ##
 ##################
+
 # Grab environment variables for Spotify API
 load_dotenv()
 
@@ -230,6 +267,7 @@ while True:
     print('--- Main Menu ---')
     print('1. Find all unsaved songs in playlists')
     print('2. Find all saved songs not in any playlists')
+    print('3. Return a random saved album')
     print('Or press ENTER to exit')
 
     choice = input()
@@ -240,6 +278,9 @@ while True:
         case '2':
             print('\r\nChecking for saved songs not in any playlists...')
             check_saved_not_in_playlists(user, playlists)
+        case '3':
+            print('\r\nChecking saved albums...')
+            random_saved_album()
         case '':
             exit()
         case _:
