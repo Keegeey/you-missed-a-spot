@@ -4,6 +4,7 @@
 ###########
 ## Imports ##
 ###########
+
 import random
 import time
 from dotenv import load_dotenv
@@ -14,6 +15,7 @@ from spotipy.oauth2 import SpotifyOAuth
 ##################
 ## Helper Functions ##
 ##################
+
 # Error handler for when calls to Spotify API fail
 def handle_api_error(error):
     match error:
@@ -98,6 +100,7 @@ def get_more_saved_songs(saved_songs):
     
     return saved_songs
 
+# If there are more saved albums, get next page
 def get_more_saved_albums(saved_albums):
     if saved_albums['next']:
         try:
@@ -112,6 +115,7 @@ def get_more_saved_albums(saved_albums):
 ################
 ## Main Functions ##
 ################
+
 # Check playlists for any unsaved songs
 def check_playlists_for_unsaved(user, playlists):
 
@@ -214,21 +218,26 @@ def check_saved_not_in_playlists(user, playlists):
 
 # Select a random album from the user's saved albums
 def random_saved_album():
-    #   Seed random number generator
-    random.seed(time.time())
+    # If saved albums already retrieved, use the cached list
+    global saved_albums_list
+    global has_saved_albums
+    if not has_saved_albums:
+        #   Seed random number generator
+        random.seed(time.time())
 
-    # Save albums to a list
-    saved_albums = spotify.current_user_saved_albums(limit=50)
-    saved_albums_list = []
-    while saved_albums:
-        for item in saved_albums['items']:
-            saved_albums_list.append(item['album'])
+        # Save albums to a list
+        has_saved_albums = True
+        saved_albums = spotify.current_user_saved_albums(limit=50)
+        
+        while saved_albums:
+            for item in saved_albums['items']:
+                saved_albums_list.append(item['album'])
 
-        # Slow down repeated API calls
-        sleep(0.05)
-        saved_albums = get_more_saved_albums(saved_albums)
-        print('.')
-    
+            # Slow down repeated API calls
+            sleep(0.05)
+            saved_albums = get_more_saved_albums(saved_albums)
+            print('.')
+        
     # Pick and print random album
     random_album_idx = random.randint(0, len(saved_albums_list) - 1)
     print('Your random album is: ')
@@ -260,6 +269,10 @@ try:
     playlists = spotify.current_user_playlists(limit=50)
 except:
     handle_api_error('PLAYLIST_RETRIEVE_ERROR')
+
+# Flag for if saved albums have been retrieved
+has_saved_albums = False
+saved_albums_list = []
 
 # Pick which function to perform
 choice = 0
