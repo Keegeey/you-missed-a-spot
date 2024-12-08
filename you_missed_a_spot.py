@@ -263,7 +263,7 @@ scope = 'user-library-read,user-read-private,playlist-read-private'
 try:
     spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope))
 except:
-    handle_api_error('AUTHENTICATION_ERR')
+    handle_api_error('AUTHENTICATION_ERROR')
 
 # Retrieve user
 try:
