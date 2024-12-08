@@ -1,20 +1,23 @@
 ## File: you_missed_a_spot.py
-## Author: Grant Goode
+## Author: Grant
 
-###########
+#############
 ## Imports ##
-###########
+#############
 
+import os
 import random
 import time
+
 from dotenv import load_dotenv
 from time import sleep
+
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 
-##################
+######################
 ## Helper Functions ##
-##################
+######################
 
 # Error handler for when calls to Spotify API fail
 def handle_api_error(error):
@@ -112,45 +115,47 @@ def get_more_saved_albums(saved_albums):
     
     return saved_albums
 
-################
+####################
 ## Main Functions ##
-################
+####################
 
 # Check playlists for any unsaved songs
 def check_playlists_for_unsaved(user, playlists):
 
     # Iterate through playlists
-    while playlists:
+    while playlists and playlists['items']:
         for playlist in playlists['items']:
             # Only check playlists which are owned by the user and not collaborative
-            if playlist['owner']['id'] == user['id'] and not playlist['collaborative']:
-                print(playlist['name'])
+            if playlist is None or playlist['owner']['id'] != user['id'] or playlist['collaborative']:
+                continue
 
-                # Retrieve tracks in current playlist
-                current_playlist_tracks = retrieve_playlist_tracks(playlist)
+            print(playlist['name'])
+
+            # Retrieve tracks in current playlist
+            current_playlist_tracks = retrieve_playlist_tracks(playlist)
+            
+            # Iterate through tracks in current playlist
+            while current_playlist_tracks:
+                # Put track objects and IDs into lists to reduce API calls
+                current_tracks, current_track_ids = create_batches(current_playlist_tracks)
                 
-                # Iterate through tracks in current playlist
-                while current_playlist_tracks:
-                    # Put track objects and IDs into lists to reduce API calls
-                    current_tracks, current_track_ids = create_batches(current_playlist_tracks)
-                    
-                    # Check if tracks are saved
-                    saved = check_if_tracks_saved(current_track_ids)
+                # Check if tracks are saved
+                saved = check_if_tracks_saved(current_track_ids)
 
-                    # Slow down repeated API calls
-                    sleep(0.1)
+                # Slow down repeated API calls
+                sleep(1)
 
-                    # Print non-saved tracks
-                    for idx, value in enumerate(saved):
-                        if not value:
-                            print(' ', current_tracks[idx]['name'], '—', current_tracks[idx]['artists'][0]['name'])
-                    
-                    # If there are more tracks in the current playlist, get next page
-                    current_playlist_tracks = get_more_tracks(current_playlist_tracks)
-                    
-                    print(' .')
+                # Print non-saved tracks
+                for idx, value in enumerate(saved):
+                    if not value:
+                        print(' ', current_tracks[idx]['name'], '—', current_tracks[idx]['artists'][0]['name'])
+                
+                # If there are more tracks in the current playlist, get next page
+                current_playlist_tracks = get_more_tracks(current_playlist_tracks)
+                
+                print(' .')
 
-                print()
+            print()
 
         # If there are more playlists, get next page
         playlists = get_more_playlists(playlists)
@@ -168,41 +173,43 @@ def check_saved_not_in_playlists(user, playlists):
             saved_tracks.append(item['track'])
 
         # Slow down repeated API calls
-        sleep(0.05)
+        sleep(1)
         saved_songs = get_more_saved_songs(saved_songs)
         print('.')
      
     # Iterate through playlists
     print('Checking saved songs against playlists...')
-    while playlists:
+    while playlists and playlists['items']:
         for playlist in playlists['items']:
             # Only check playlists which are owned by the user and not collaborative
-            if playlist['owner']['id'] == user['id'] and not playlist['collaborative']:
-                print(playlist['name'])
+            if playlist is None or playlist['owner']['id'] != user['id'] or playlist['collaborative']:
+                continue
 
-                # Retrieve tracks in current playlist
-                current_playlist_tracks = retrieve_playlist_tracks(playlist)
+            print(playlist['name'])
+
+            # Retrieve tracks in current playlist
+            current_playlist_tracks = retrieve_playlist_tracks(playlist)
+            
+            # Iterate through tracks in current playlist
+            while current_playlist_tracks:
+                # Put track objects and IDs into lists to reduce API calls
+                current_tracks, current_track_ids = create_batches(current_playlist_tracks)
                 
-                # Iterate through tracks in current playlist
-                while current_playlist_tracks:
-                    # Put track objects and IDs into lists to reduce API calls
-                    current_tracks, current_track_ids = create_batches(current_playlist_tracks)
-                    
-                    # Check if tracks are saved
-                    for current_track_id in current_track_ids:
-                        for saved_track in saved_tracks:
-                            if current_track_id == saved_track['id']:
-                                saved_tracks.remove(saved_track)
+                # Check if tracks are saved
+                for current_track_id in current_track_ids:
+                    for saved_track in saved_tracks:
+                        if current_track_id == saved_track['id']:
+                            saved_tracks.remove(saved_track)
 
-                    # Slow down repeated API calls
-                    sleep(0.1)
-                    
-                    # If there are more tracks in the current playlist, get next page
-                    current_playlist_tracks = get_more_tracks(current_playlist_tracks)
-                    
-                    print(' .')
+                # Slow down repeated API calls
+                sleep(1)
+                
+                # If there are more tracks in the current playlist, get next page
+                current_playlist_tracks = get_more_tracks(current_playlist_tracks)
+                
+                print(' .')
 
-                print()
+            print()
 
         # If there are more playlists, get next page
         playlists = get_more_playlists(playlists)
@@ -222,7 +229,7 @@ def random_saved_album():
     global saved_albums_list
     global has_saved_albums
     if not has_saved_albums:
-        #   Seed random number generator
+        # Seed random number generator
         random.seed(time.time())
 
         # Save albums to a list
@@ -234,7 +241,7 @@ def random_saved_album():
                 saved_albums_list.append(item['album'])
 
             # Slow down repeated API calls
-            sleep(0.05)
+            sleep(1)
             saved_albums = get_more_saved_albums(saved_albums)
             print('.')
         
@@ -244,9 +251,9 @@ def random_saved_album():
     print(saved_albums_list[random_album_idx]['name'], '—', saved_albums_list[random_album_idx]['artists'][0]['name'])
     print()
 
-##################
+#######################
 ## Start of Program  ##
-##################
+#######################
 
 # Grab environment variables for Spotify API
 load_dotenv()
