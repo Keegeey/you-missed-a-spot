@@ -251,14 +251,16 @@ def random_saved_album():
     print(saved_albums_list[random_album_idx]['name'], '—', saved_albums_list[random_album_idx]['artists'][0]['name'])
     print()
 
+# Select a random playlist from the user's playlists
 def random_playlist(playlists):
+    # If names of playlists already retrieved, use the cached list
     global saved_playlists_list
     global has_saved_playlists
     if not has_saved_playlists:
         # Seed random number
         random.seed(time.time())
 
-        # Save albums to a list
+        # Save playlists to a list
         has_saved_playlists = True
         
         while playlists and playlists['items']:
@@ -336,7 +338,7 @@ while True:
             print('\r\nChecking saved albums...')
             random_saved_album()
         case '4':
-            print('\r\nFinding random playlist')
+            print('\r\nChecking playlists...')
             random_playlist(playlists)
         case '':
             exit()
