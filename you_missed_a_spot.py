@@ -278,7 +278,7 @@ def random_playlist(playlists):
     
     # Pick random playlist
     random_playlist_idx = random.randint(0, len(saved_playlists_list) - 1)
-    print('Your random album is: ')
+    print('Your random playlist is: ')
     print(saved_playlists_list[random_playlist_idx])
     print()
 
