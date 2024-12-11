@@ -251,6 +251,35 @@ def random_saved_album():
     print(saved_albums_list[random_album_idx]['name'], '—', saved_albums_list[random_album_idx]['artists'][0]['name'])
     print()
 
+def random_playlist(playlists):
+    global saved_playlists_list
+    global has_saved_playlists
+    if not has_saved_playlists:
+        # Seed random number
+        random.seed(time.time())
+
+        # Save albums to a list
+        has_saved_playlists = True
+        
+        while playlists and playlists['items']:
+            for playlist in playlists['items']:
+                # Only check playlists which are owned by the user and not collaborative
+                if playlist is None or playlist['owner']['id'] != user['id'] or playlist['collaborative']:
+                    continue
+                
+                saved_playlists_list.append(playlist['name'])
+
+            # Slow down repeated API calls
+            sleep(1)
+            playlists = get_more_playlists(playlists)
+            print('.')
+    
+    # Pick random playlist
+    random_playlist_idx = random.randint(0, len(saved_playlists_list) - 1)
+    print('Your random album is: ')
+    print(saved_playlists_list[random_playlist_idx])
+    print()
+
 #######################
 ## Start of Program  ##
 #######################
@@ -281,6 +310,10 @@ except:
 has_saved_albums = False
 saved_albums_list = []
 
+# Flag for if saved playlist names have been retrieved
+has_saved_playlists = False
+saved_playlists_list = []
+
 # Pick which function to perform
 choice = 0
 while True:
@@ -288,6 +321,7 @@ while True:
     print('1. Find all unsaved songs in playlists')
     print('2. Find all saved songs not in any playlists')
     print('3. Return a random saved album')
+    print('4. Return a random playlist')
     print('Or press ENTER to exit')
 
     choice = input()
@@ -301,6 +335,9 @@ while True:
         case '3':
             print('\r\nChecking saved albums...')
             random_saved_album()
+        case '4':
+            print('\r\nFinding random playlist')
+            random_playlist(playlists)
         case '':
             exit()
         case _:
